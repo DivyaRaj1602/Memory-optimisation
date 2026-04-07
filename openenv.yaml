@@ -1,0 +1,59 @@
+name: agent-memory-openenv
+version: "1.0"
+description: >
+  RL environment for training an AI assistant to manage a three-layer
+  memory system (working, episodic, semantic) for personalized responses.
+
+observation_space:
+  current_query: string
+  recent_messages: list[string]
+  working_memory_usage: int
+  episodic_memory_usage: int
+  semantic_memory_usage: int
+  memory_contents:
+    preferences: list[string]
+    intent: list[string]
+    emotion: list[string]
+    personality: list[string]
+    facts: list[string]
+  retrieved_memories: list[string]
+  step_number: int
+
+action_space:
+  type: discrete
+  actions:
+    - store_working
+    - store_episodic
+    - store_preference
+    - store_intent
+    - store_emotion
+    - store_personality
+    - store_fact
+    - retrieve_memory
+    - discard_memory
+    - summarize_memory
+    - do_nothing
+
+reward:
+  storage_correct: 0.3
+  storage_partial: 0.05
+  storage_wrong: -0.3
+  retrieval_relevant: 0.4
+  retrieval_missed: -0.3
+  retrieval_irrelevant: -0.1
+  response_correct: 1.0
+  response_generic: 0.3
+  response_wrong: -1.0
+  memory_overflow: -0.2
+  trivial_store: -0.1
+
+memory_limits:
+  working: 5
+  episodic: 50
+  semantic: 30
+
+tasks:
+  difficulty_levels:
+    - easy      # explicit fact recall
+    - medium    # preference-based reasoning
+    - hard      # multi-memory reasoning

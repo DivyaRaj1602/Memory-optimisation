@@ -1,0 +1,30 @@
+# Core
+gymnasium>=0.29.0
+numpy>=1.24.0
+pyyaml>=6.0
+pydantic>=2.0.0
+
+# Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# RL
+stable-baselines3>=2.1.0
+torch>=2.0.0
+
+# LLM (open-source, local)
+transformers>=4.36.0
+accelerate>=0.25.0
+sentencepiece>=0.1.99
+
+# Embeddings for memory retrieval & response grading
+sentence-transformers>=2.2.0
+
+# Utilities
+rich>=13.0.0
+python-dotenv>=1.0.0
+
+# Dev / notebooks
+pytest>=8.0.0
+httpx>=0.27.0
+jupyter>=1.0.0
