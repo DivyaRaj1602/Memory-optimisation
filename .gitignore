@@ -1,0 +1,24 @@
+# Credentials — never commit
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Models
+models/
+
+# Results
+scripts/llm_baseline_results.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store

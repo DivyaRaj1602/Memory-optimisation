@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.gitignore
+*.ipynb_checkpoints
+models/
+scripts/llm_baseline_results.json
+.DS_Store

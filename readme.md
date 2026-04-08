@@ -1,13 +1,26 @@
-# 🧠 Agent Memory OpenEnv
+---
+title: Memory Optimisation
+emoji: 🧠
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 8004
+pinned: false
+---
 
-An RL environment for training an AI assistant to dynamically manage a three-layer memory system — **working**, **episodic**, and **semantic** — to deliver personalized responses while respecting memory constraints.
+# Agent Memory OpenEnv
+
+An OpenEnv-compatible RL environment for training an AI assistant to dynamically manage a three-layer memory system — **working**, **episodic**, and **semantic** — to deliver personalised responses while respecting memory constraints.
 
 ## Architecture
 
 ```
 Conversation Input
        ↓
- MemoryEnv (Gymnasium)
+ FastAPI Server (port 8004)
+ /reset  /step  /state  /health
+       ↓
+ MemoryEnvService (Gymnasium)
        ↓
  MemoryManager
  (working / episodic / semantic)
@@ -42,106 +55,111 @@ Conversation Input
 | Response quality | 35% | -1.0 to +1.0 |
 | Memory efficiency | 10% | -0.2 to 0.0 |
 
+## Project Structure
+
+```
+memory-optimisation/
+├── inference.py              # Submission inference script (START/STEP/END logs)
+├── client.py                 # MemoryEnv (gym.Env) + BaselineAgent + RLAgent
+├── models.py                 # Pydantic MemoryAction / MemoryObservation
+├── scenario_config.json      # All 9 benchmark scenarios
+├── openenv.yaml              # Environment spec
+├── pyproject.toml            # Package config
+├── requirements.txt          # Full dependencies
+├── requirements-server.txt   # Slim deps for Docker server
+├── Dockerfile                # FastAPI server on port 8004
+├── server/
+│   ├── main.py               # FastAPI app entry point
+│   ├── routes/memory.py      # /reset /step /state /health /
+│   ├── handlers/             # Request handling logic
+│   ├── services/             # environment.py, memory_manager.py, action_handler.py
+│   ├── memory/               # working.py, episodic.py, semantic.py
+│   ├── graders/              # storage_grader.py, retrieval_grader.py, response_grader.py
+│   ├── reward/               # reward_function.py
+│   ├── schemas/              # Pydantic API schemas
+│   └── db/scenarios.py       # 9 built-in scenarios
+├── scripts/
+│   └── run_llm_baseline.py   # LLM baseline via HF Inference API
+└── client_notebooks/
+    └── evaluate.ipynb        # Evaluation notebook
+```
+
 ## Quick Start
 
 ### 1. Install
 
 ```bash
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run Baseline Evaluation
+### 2. Start the server
 
 ```bash
-python scripts/run_baseline.py
+python -m uvicorn server.main:app --host 0.0.0.0 --port 8004 --reload
 ```
 
-This runs the heuristic keyword-matching agent across all 9 built-in scenarios (easy, medium, hard) and prints per-step rewards plus a summary table.
+Server runs at `http://localhost:8004`
+- `GET  /` — welcome + available endpoints
+- `GET  /health` — health check
+- `GET  /docs` — interactive API docs
+- `POST /reset` — start a new episode
+- `POST /step` — take an action `{"action": 0-10}`
+- `GET  /state` — current environment state
 
-### 3. Train the RL Agent
+### 3. Run inference (LLM agent)
+
+In a second terminal:
 
 ```bash
-python -c "from agents.rl_agent import train; train(total_timesteps=50000)"
+# copy and fill in your HF token
+cp .env.example .env
+
+python inference.py
 ```
 
-The trained PPO model saves to `models/ppo_memory_agent.zip`.
+Output:
+```
+[START] task=easy_01 env=memory_env model=Qwen/Qwen2.5-7B-Instruct-Turbo
+[STEP] step=1 action=store_fact reward=0.08 done=false error=null
+[STEP] step=2 action=retrieve_memory reward=0.47 done=true error=null
+[END] success=true steps=2 score=0.73 rewards=0.08,0.47
+```
 
-### 4. Evaluate the RL Agent
+### 4. Run LLM baseline evaluation
 
 ```bash
-python evaluation/evaluate.py --agent rl --model-path models/ppo_memory_agent
+python scripts/run_llm_baseline.py
+# filter by difficulty
+python scripts/run_llm_baseline.py --difficulty easy
 ```
 
-### 5. Launch Interactive Demo
+### 5. Train the RL agent
 
 ```bash
-python app/app.py
+python3 -c "from client import train_rl; train_rl(total_timesteps=50000)"
 ```
 
-Opens a Gradio UI at `http://localhost:7860` where you can step through scenarios manually or let the baseline agent auto-play.
+Model saves to `models/ppo_memory_agent.zip`.
 
 ### 6. Docker
 
 ```bash
 docker build -t memory-env .
-docker run -p 7860:7860 memory-env
+docker run -p 8004:8004 memory-env
 ```
 
-## API Keys Required
-
-| What | Required? | Notes |
-|------|-----------|-------|
-| **None (default)** | ✅ No keys | Baseline + PPO training + keyword grading all run locally |
-| **HuggingFace token** | Optional | Only if you use gated models (e.g. Mistral) for response generation |
-| **sentence-transformers** | Optional | Set `USE_EMBEDDINGS=True` in `graders/response_grader.py` for semantic grading — downloads `all-MiniLM-L6-v2` automatically, no key needed |
-
-## Project Structure
-
-```
-agent-memory-openenv/
-├── openenv.yaml              # Environment spec
-├── env/
-│   ├── environment.py        # Gymnasium env (reset / step / render)
-│   ├── state_builder.py      # Observation constructor
-│   ├── action_handler.py     # Action dispatch
-│   └── memory_manager.py     # Coordinates all memory layers
-├── memory/
-│   ├── working_memory.py     # FIFO buffer
-│   ├── episodic_memory.py    # Timestamped events
-│   └── semantic_memory.py    # Structured user model
-├── tasks/
-│   ├── easy_task.py          # Explicit fact recall
-│   ├── medium_task.py        # Preference reasoning
-│   └── hard_task.py          # Multi-memory reasoning
-├── graders/
-│   ├── storage_grader.py     # Memory allocation scoring
-│   ├── retrieval_grader.py   # Retrieval relevance scoring
-│   └── response_grader.py    # Response quality scoring
-├── reward/
-│   └── reward_function.py    # Weighted reward combiner
-├── agents/
-│   ├── baseline_agent.py     # Keyword heuristic
-│   └── rl_agent.py           # PPO via stable-baselines3
-├── evaluation/
-│   ├── evaluate.py           # Run + score scenarios
-│   └── metrics.py            # Aggregate metrics
-├── data/conversations/
-│   └── scenarios.py          # 9 built-in scenarios
-├── scripts/
-│   └── run_baseline.py       # CLI entry point
-├── app/
-│   └── app.py                # Gradio interactive demo
-├── Dockerfile
-├── requirements.txt
-└── README.md
+With Docker, run inference using:
+```bash
+LOCAL_IMAGE_NAME=memory-env python inference.py
 ```
 
-## Extending
+## Environment Variables
 
-**Add scenarios:** Edit `data/conversations/scenarios.py` — follow the existing dict schema with `ground_truth_storage`, `ground_truth_retrieval`, and keyword lists.
-
-**Add memory importance scoring:** The episodic memory already has an `importance` field. Extend the storage grader to assign importance scores and the episodic memory to use them for smarter eviction.
-
-**Plug in an LLM for response generation:** Replace the simple string concatenation in `environment.py` (the `response_text = ...` line in the query phase) with a call to a local model via `transformers`. The response grader already supports both keyword and semantic similarity modes.
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `HF_TOKEN` | Yes | — | Hugging Face API token |
+| `API_BASE_URL` | No | `https://router.huggingface.co/together/v1` | LLM API endpoint |
+| `MODEL_NAME` | No | `Qwen/Qwen2.5-7B-Instruct-Turbo` | Model to use |
+| `LOCAL_IMAGE_NAME` | No | — | Docker image name (e.g. `memory-env`) |

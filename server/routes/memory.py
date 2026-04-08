@@ -13,6 +13,27 @@ from server.handlers.memory_handler import handle_reset, handle_step, handle_sta
 router = APIRouter()
 
 
+@router.get("/")
+def root():
+    return {
+        "name": "Memory Environment",
+        "version": "1.0.0",
+        "description": "OpenEnv-compatible RL environment for LLM memory management benchmarking.",
+        "endpoints": {
+            "GET  /health": "Health check",
+            "GET  /state": "Current environment state",
+            "POST /reset": "Reset environment - body: {difficulty, scenario_idx}",
+            "POST /step": "Take an action - body: {action: 0-10}",
+            "GET  /docs": "Interactive API documentation",
+        },
+        "actions": [
+            "store_working", "store_episodic", "store_preference", "store_intent",
+            "store_emotion", "store_personality", "store_fact",
+            "retrieve_memory", "discard_memory", "summarize_memory", "do_nothing"
+        ],
+    }
+
+
 @router.get("/health", response_model=HealthResponse)
 def health():
     return HealthResponse(status="ok", environment="memory_env")

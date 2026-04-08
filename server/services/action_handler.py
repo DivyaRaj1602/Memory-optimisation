@@ -20,6 +20,7 @@ ACTION_LIST = [
 ]
 
 NUM_ACTIONS = len(ACTION_LIST)
+ACTION_INDEX = {name: i for i, name in enumerate(ACTION_LIST)}
 
 
 def action_index_to_name(index: int) -> str:

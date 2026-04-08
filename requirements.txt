@@ -23,6 +23,7 @@ sentence-transformers>=2.2.0
 # Utilities
 rich>=13.0.0
 python-dotenv>=1.0.0
+openai>=1.0.0
 
 # Dev / notebooks
 pytest>=8.0.0
