@@ -23,9 +23,9 @@ app.add_middleware(
 app.include_router(router)
 
 
-def serve():
+def main():
     uvicorn.run("server.main:app", host="0.0.0.0", port=8004, reload=False)
 
 
 if __name__ == "__main__":
-    serve()
+    main()
