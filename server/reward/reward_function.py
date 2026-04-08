@@ -48,5 +48,9 @@ def compute_reward(
         breakdown["response"] = r_resp
         total = W_RETRIEVAL * r_ret + W_RESPONSE * r_resp
 
-    breakdown["total"] = round(total, 4)
-    return round(total, 4), breakdown
+    # Normalize raw reward to (0, 1) exclusive — OpenEnv requires task scores
+    # strictly between 0 and 1. Raw rewards span roughly [-0.5, 0.5], so
+    # shifting by 0.5 maps that range to [0, 1], then we clamp away from edges.
+    score = round(max(0.001, min(0.999, total + 0.5)), 4)
+    breakdown["total"] = score
+    return score, breakdown
