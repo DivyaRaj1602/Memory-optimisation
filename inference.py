@@ -298,7 +298,7 @@ async def run_scenario(
                 break
 
         total_reward = sum(rewards)
-        score = max(0.0, min(1.0, total_reward / MAX_REWARD_PER_SCENARIO))
+        score = max(0.001, min(0.999, total_reward / MAX_REWARD_PER_SCENARIO))
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as exc:
