@@ -21,7 +21,11 @@ dependencies = [
     "sentence-transformers>=2.2.0",
     "rich>=13.0.0",
     "python-dotenv>=1.0.0",
+    "openenv-core>=0.2.0",
 ]
+
+[project.scripts]
+server = "server.main:serve"
 
 [project.optional-dependencies]
 notebooks = ["jupyter>=1.0.0", "ipykernel>=6.0.0"]
