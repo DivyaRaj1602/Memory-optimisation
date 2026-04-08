@@ -1,5 +1,12 @@
-"""Entry point alias — re-exports the FastAPI app for multi-mode deployment."""
+"""Entry point for multi-mode deployment."""
 
-from server.main import app, main
+import uvicorn
+from server.main import app
 
-__all__ = ["app", "main"]
+
+def main():
+    uvicorn.run("server.main:app", host="0.0.0.0", port=8004, reload=False)
+
+
+if __name__ == "__main__":
+    main()
