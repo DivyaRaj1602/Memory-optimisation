@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements-server.txt
 COPY . .
 
 # launch FastAPI server (port 8004, matching OpenEnv convention)
-EXPOSE 8004
+EXPOSE 7860
 ENV PYTHONPATH="/app"
 
-CMD ["python", "-m", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8004"]
+CMD ["python", "-m", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "7860"]
